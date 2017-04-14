@@ -7,7 +7,7 @@ function realTimeChartMulti() {
 
   var version = "0.1.0",
       datum, data,
-      maxSeconds = 300, pixelsPerSecond = 10,
+      maxSeconds = 300*5, pixelsPerSecond = 1,
       svgWidth = 700, svgHeight = 300,
       margin = { top: 20, bottom: 20, left: 100, right: 30, topNav: 10, bottomNav: 20 },
       dimension = { chartTitle: 20, xAxis: 20, yAxis: 20, xTitle: 20, yTitle: 20, navChart: 70 },

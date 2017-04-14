@@ -2,13 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <!-- Author: Bo Ericsson -->
-  <title>Real Time Chart Multi</title>
-  <link rel=stylesheet type=text/css href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.min.css" media="all">
-  <!--<link rel=stylesheet type=text/css href="../_lib/bootstrap.min.css" media="all">-->
+  <title>Sepsis Prediction</title>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.js" integrity="sha256-gfQwA6PlkZsLqWu4bU4hXPrbTqzixm0B5MdvBLI+Oas=" crossorigin="anonymous"></script>
   <style>
+  html, body { 
+	height: 100%; 
+	padding: 0; 
+	margin: 0;
+	font-family: 'Open Sans', sans-serif;
+  }
   .axis text {
-    font: 10px sans-serif;
+    /* font: 10px sans-serif; */
+	font-size: 10px;
   }
   .chartTitle {
     font-size: 12px;
@@ -47,157 +57,227 @@
   .viewport .extent {
     fill: green;
   }
-  .well {
-    padding-top: 0px;
-    padding-bottom: 0px;
+  .chart-box {
+	width: 50%; 
+	height: 50%; 
+	float: left;
   }
+	.ticks {
+	  font: 10px sans-serif;
+	}
+
+	.track,
+	.track-inset,
+	.track-overlay {
+	  stroke-linecap: round;
+	}
+
+	.track {
+	  stroke: #000;
+	  stroke-opacity: 0.3;
+	  stroke-width: 10px;
+	}
+
+	.track-inset {
+	  stroke: #ddd;
+	  stroke-width: 8px;
+	}
+
+	.track-overlay {
+	  pointer-events: stroke;
+	  stroke-width: 50px;
+	  stroke: transparent;
+	  cursor: pointer;
+	}
+
+	.handle {
+	  fill: #fff;
+	  stroke: #000;
+	  stroke-opacity: 0.5;
+	  stroke-width: 1.25px;
+	}
   </style>
 <body>
 
-<div style="max-width: 600px; max-height: 400px; padding: 10px">
+<div class="chart-box" id="viewDiv1"></div>
+<div class="chart-box" id="viewDiv2"></div>
+<div class="chart-box" id="viewDiv3"></div>
+<div class="chart-box" id="viewDiv4"></div>
 
-  <div class="well">
-    <center><h4>Patient X</h4></center>
-  </div>
-  <!--<input id="debug" type="checkbox" name="debug" value="debug" style="margin-bottom: 10px" /> Debug -->
-  <input id="halt" type="checkbox" name="halt" value="halt" style="margin-bottom: 10px" /> Halt
-
-  <center><div id="viewDiv"></div></center>
-
-</div>
-
-<br><br>
-
-
-
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-<!--<script src="../_lib/d3.min.js"></script>-->
 <script src="realTimeChartMulti.js"></script>
 <script>
 'use strict';
+$(document).ready(function(){
+	for(var i = 1; i <= 4; i++) {
+		
+		var chartArr = [];
+		var chartDivArr = [];
+		
+		// create the real time chart
+		chartArr[i] = realTimeChartMulti()
+			.title("Chance of Developing Sepsis in Next 8 Hours")
+			.yTitle("Probability")
+			.xTitle("Time")
+			.yDomain([0.25, 0.5, 0.75, 1]) // initial y domain (note array)
+			.border(true)
+			.width($("#viewDiv"+i).width() - 20)
+			.height($("#viewDiv"+i).height()- 20);
 
-// create the real time chart
-var chart = realTimeChartMulti()
-    .title("Chance of Developing Sepsis in Next 8 Hours")
-    .yTitle("Probability")
-    .xTitle("Time")
-    .yDomain(["0","0.25","0.75","1.0"]) // initial y domain (note array)
-    .border(true)
-    .width(600)
-    .height(350);
-
-// invoke the chart
-var chartDiv = d3.select("#viewDiv").append("div")
-    .attr("id", "chartDiv")
-    .call(chart);
-
-
-// alternative and equivalent invocation
-//chart(chartDiv); 
-
-// event handler for debug checkbox
-/*d3.select("#debug").on("change", function() {
-  var state = d3.select(this).property("checked")
-  chart.debug(state);
-}) */
-
-// event handler for halt checkbox
-d3.select("#halt").on("change", function() {
-  var state = d3.select(this).property("checked")
-  chart.halt(state);
-})
+		// invoke the chart
+		chartDivArr[i] = d3.select("#viewDiv"+i).append("div")
+			.attr("id", "chartDiv"+i)
+			.call(chartArr[i]);
 
 
+		// alternative and equivalent invocation
+		//chart(chartDiv); 
 
-// configure the data generator
+		// event handler for debug checkbox
+		/*d3.select("#debug").on("change", function() {
+		  var state = d3.select(this).property("checked")
+		  chart.debug(state);
+		}) */
 
-// mean and deviation for generation of time intervals
-var tX = 5; // time constant, multiple of one second
-var meanMs = 1000 * tX, // milliseconds
-    dev = 200 * tX; // std dev
+		// event handler for halt checkbox
+		d3.select("#halt").on("change", function() {
+		  var state = d3.select(this).property("checked")
+		  chartArr[i].halt(state);
+		})
 
-// define time scale
-var timeScale = d3.scale.linear()
-    .domain([300 * tX, 1700 * tX])
-    .range([300 * tX, 1700 * tX])
-    .clamp(true);
 
-// define function that returns normally distributed random numbers
-var normal = d3.random.normal(meanMs, dev);
 
-// define color scale
-var color = d3.scale.category10();
+		// configure the data generator
 
-// in a normal use case, real time data would arrive through the network or some other mechanism
-var d = -1;
-var shapes = ["rect", "circle"];
-var timeout = 0;
+		// mean and deviation for generation of time intervals
+		var tX = 5; // time constant, multiple of one second
+		var meanMs = 1000 * tX, // milliseconds
+			dev = 200 * tX; // std dev
 
-// define data generator
-function dataGenerator() {
+		// define time scale
+		var timeScale = d3.scale.linear()
+			.domain([300 * tX, 1700 * tX])
+			.range([300 * tX, 1700 * tX])
+			.clamp(true);
 
-  setTimeout(function() {
+		// define function that returns normally distributed random numbers
+		var normal = d3.random.normal(meanMs, dev);
 
-    // add categories dynamically
-    d++;
-    switch (d) {
-      case 5:
-        chart.yDomain(["0", "0.25", "0.75","1"]);
-        break;
-      case 10:
-        chart.yDomain(["0", "0.25", "0.75","1"]);
-        break;
-      default:
-    }
-    var r = ([Math.floor(Math.random() * 4) + 1])
-    // output a sample for each category, each interval (five seconds)
-    r.forEach(function(i) {
+		// define color scale
+		var color = d3.scale.category10();
 
-      // create randomized timestamp for this category data item
-      var now = new Date(new Date().getTime() + i * (Math.random() - 0.5) * 1000);
+		// in a normal use case, real time data would arrive through the network or some other mechanism
+		var d = -1;
+		var shapes = ["rect", "circle"];
+		var timeout = 0;
 
-      // create new data item
-      var obj;
-      var doSimple = false;
-      if (doSimple) {
-        obj = {
-          // simple data item (simple black circle of constant size)
-          time: now,
-          color: "black",
-          opacity: 1,
-          category: parseFloat(i/4),
-          type: "circle",
-          size: 5,
-        };
+		// define data generator
+		function dataGenerator(chart, prevObjs, chartIndex) {
+		  setTimeout(function() {
+				// add categories dynamically
+				d++;
+				switch (d) {
+				  case 5:
+					chart.yDomain([0.25, 0.5, 0.75, 1]);
+					break;
+				  case 10:
+					chart.yDomain([0.25, 0.5, 0.75, 1]);
+					break;
+				  default:
+				}
+				var r = [0];
+				switch (chartIndex) {
+					case 1:
+						r = ([(Math.random() * (0.99 - 0.50) + 0.50).toFixed(2)]);
+						break;
+					case 2:
+						r = ([(Math.random() * (0.60 - 0.40) + 0.40).toFixed(2)]);
+						break;
+					case 3:
+						r = ([(Math.random() * (0.55 - 0.45) + 0.45).toFixed(2)]);
+						break;
+					case 4:
+						r = ([(Math.random() * (0.5 - 0.01) + 0.01).toFixed(2)]);
+						break;
+				}
+				console.log(chartIndex + " " + r);
+				var objs = [];
+				// output a sample for each category, each interval (five seconds)
+				r.forEach(function(i, index) {
 
-      } else {
-        obj = {
-          // complex data item; four attributes (type, color, opacity and size) are changing dynamically with each iteration (as an example)
-          time: now,
-          color: color(d % 10),
-          opacity: Math.max(Math.random(), 0.3),
-          category: parseFloat(i/4),
-          //type: shapes[Math.round(Math.random() * (shapes.length - 1))], // the module currently doesn't support dynamically changed svg types (need to add key function to data, or method to dynamically replace svg object â€“ tbd)
-          type: "circle",
-          size: Math.max(Math.round(Math.random() * 12), 4),
-        };
-      }
-      // send the datum to the chart
-      chart.datum(obj); 
-    });
+				  // create randomized timestamp for this category data item
+				  //var now = new Date(new Date().getTime() + i * (Math.random() - 0.5) * 1000);
+				  var now = new Date(new Date().getTime());
 
-    // drive data into the chart at average interval of five seconds
-    // here, set the timeout to roughly five seconds
-    timeout = Math.round(timeScale(normal()));
+				  // create new data item
+				  var obj;
+				  var doSimple = false;
+				  if (doSimple) {
+					obj = {
+					  // simple data item (simple black circle of constant size)
+					  time: now,
+					  color: "black",
+					  opacity: 1,
+					  category: i,
+					  type: "circle",
+					  size: 5,
+					};
 
-    // do forever
-    dataGenerator();
+				  } else {
+					var prob = i;
+					var prevProb = prevObjs[index].category;
+					//console.log(prob + " " + prevProb);
+					var color = d3.rgb("white");
+					if(prob >= 0.9) {
+						color = d3.rgb("#a50026");
+					} else if(prob >= 0.8) {
+						color = d3.rgb("#d73027");
+					} else if(prob >= 0.7) {
+						color = d3.rgb("#f46d43");
+					} else if(prob >= 0.6) {
+						color = d3.rgb("#fdae61");
+					} else if(prob >= 0.5) {
+						color = d3.rgb("#fee08b");
+					} else if(prob >= 0.4) {
+						color = d3.rgb("#d9ef8b");
+					} else if(prob >= 0.3) {
+						color = d3.rgb("#a6d96a");
+					} else if(prob >= 0.2) {
+						color = d3.rgb("#66bd63");
+					} else if(prob >= 0.2) {
+						color = d3.rgb("#1a9850");
+					} else if(prob >= 0.0) {
+						color = d3.rgb("#006837");
+					}
+				  
+					obj = {
+					  // complex data item; four attributes (type, color, opacity and size) are changing dynamically with each iteration (as an example)
+					  time: now,
+					  color: color,
+					  opacity: 1,
+					  category: prob,
+					  //type: shapes[Math.round(Math.random() * (shapes.length - 1))], // the module currently doesn't support dynamically changed svg types (need to add key function to data, or method to dynamically replace svg object – tbd)
+					  type: "circle",
+					  size: 6,
+					};
+					objs.push(obj);
+				  }
+				  // send the datum to the chart
+				  chart.datum(obj); 
+				});
 
-  }, timeout);
-}
+				// drive data into the chart at average interval of five seconds
+				// here, set the timeout to roughly five seconds
+				timeout = Math.round(timeScale(normal()));
 
-// start the data generator
-dataGenerator();
+				prevObjs = objs;
+				
+				// do forever
+				dataGenerator(chart, prevObjs, chartIndex);
+		  }, timeout);
+		}
 
+		// start the data generator
+		dataGenerator(chartArr[i], [{category: 0.00}], i);
+	}
+});
 </script>
