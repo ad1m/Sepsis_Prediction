@@ -1,6 +1,3 @@
-<!-- Author: Bo Ericsson, bo@boe.net -->
-<!-- Inspiration from numerous examples by Mike Bostock, http://bl.ocks.org/mbostock, -->
-<!-- and example by Andy Aiken, http://blog.scottlogic.com/2014/09/19/interactive.html -->
 'use strict';
 
 function realTimeChartMulti() {
@@ -66,6 +63,68 @@ function realTimeChartMulti() {
           if (border) return "1px solid lightgray"; 
           else return null;
         });
+		
+	var pause = svg.append("g")
+		.attr("transform", "translate (10,20)")
+		.append('text')
+		.text('\uf04c')
+		.attr('font-family', 'FontAwesome')
+		.attr('font-size', '16px')
+		.attr("fill", "#666")
+		.style("cursor", "pointer")
+		.on('click', function (d) {
+			d3.event.stopPropagation();
+			d3.event.preventDefault();
+			if(halted) {
+				halted = false;
+				d3.select(this).text('\uf04c');
+			} else {
+				halted = true;
+				d3.select(this).text('\uf04b');
+			}
+		});
+	
+	var drag = d3.behavior.drag()
+		.origin(function(d) { return d; })
+		.on("dragstart", dragstarted)
+		.on("drag", dragged)
+		.on("dragend", dragended);
+	
+	var slider = svg.append("g")
+		.attr("transform", "translate (40,4)")
+		.append('foreignObject')
+		.attr({
+			'width': 100,
+			'height': 20
+		})
+		.append('xhtml:div')
+		.append("input")
+		.datum({})
+		.attr("type", "range")
+		.attr("value", 60)
+		.attr("min", 60)
+		.attr("max", 300*60)
+		.attr("step", 60)
+		.on("input", slided);
+		
+	function dragstarted(d) {
+	  d3.event.sourceEvent.stopPropagation();
+	  d3.select(this).classed("dragging", true);
+	}
+
+	function dragged(d) {
+	  d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+	}
+
+	function dragended(d) {
+	  d3.select(this).classed("dragging", false);
+	}
+
+	function slided(d){
+		halted = true;
+		maxSeconds = parseInt(d3.select(this).property("value"));
+		halted = false;
+	}
 
     // create main group and translate
     var main = svg.append("g")
@@ -143,7 +202,8 @@ function realTimeChartMulti() {
 
     // define main chart scales
     x = d3.time.scale().range([0, width]);
-    y = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([height, 0], 1)
+    //y = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([height, 0], 1)
+    y = d3.scale.linear().range([height, 0], 1)
 
     // define main chart axis
     xAxis = d3.svg.axis().orient("bottom");
@@ -175,7 +235,8 @@ function realTimeChartMulti() {
 
     // define nav chart scales
     xNav = d3.time.scale().range([0, widthNav]);
-    yNav = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([heightNav, 0], 1)
+    //yNav = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([heightNav, 0], 1)
+    yNav = d3.scale.linear().range([heightNav, 0]);
 
     // define nav axis
     var xAxisNav = d3.svg.axis().orient("bottom");
@@ -498,11 +559,13 @@ function realTimeChartMulti() {
     yDomain = _;
     if (svg) {
       // update the y ordinal scale
-      y = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([height, 0], 1);
+      //y = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([height, 0], 1);
+      y = d3.scale.linear().range([height, 0]);
       // update the y axis
       yAxis.scale(y)(yAxisG);
       // update the y ordinal scale for the nav chart
-      yNav = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([heightNav, 0], 1);
+      //yNav = d3.scale.ordinal().domain(yDomain).rangeRoundPoints([heightNav, 0], 1);
+      yNav = d3.scale.linear().range([heightNav, 0]);
     }
     return chart;       
   }
